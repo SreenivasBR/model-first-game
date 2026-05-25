@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Locked or Loose? 🦁💙 — Model First Game</title>
+<style>
+  :root {
+    --leo-blu: #1e88e5;
+    --leo-blu-dark: #0d47a1;
+    --leo-blu-light: #e3f2fd;
+    --green: #43a047;
+    --green-light: #c8e6c9;
+    --orange: #fb8c00;
+    --orange-light: #ffe0b2;
+    --red: #e53935;
+    --red-light: #ffcdd2;
+    --gray: #757575;
+    --bg: #f5f7fa;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    background: linear-gradient(135deg, #e3f2fd 0%, #fff8e1 100%);
+    margin: 0;
+    padding: 0;
+    color: #222;
+    min-height: 100vh;
+  }
+  header {
+    background: linear-gradient(135deg, var(--leo-blu) 0%, var(--leo-blu-dark) 100%);
+    color: white;
+    padding: 28px 40px 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  h1 {
+    margin: 0;
+    font-size: 28px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  h1 .emoji { font-size: 32px; }
+  header .subtitle {
+    margin-top: 6px;
+    opacity: 0.9;
+    font-size: 14px;
+  }
+  .tab-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 20px;
+  }
+  .tab {
+    padding: 10px 22px;
+    background: rgba(255,255,255,0.15);
+    border: 2px solid rgba(255,255,255,0.3);
+    color: white;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+    font-size: 14px;
+  }
+  .tab:hover { background: rgba(255,255,255,0.25); }
+  .tab.active {
+    background: white;
+    color: var(--leo-blu-dark);
+    border-color: white;
+  }
+  main { padding: 28px 40px; max-width: 1400px; margin: 0 auto; }
+  .panel { display: none; }
+  .panel.active { display: block; animation: fadeIn 0.3s; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ===== Stats bar ===== */
+  .stats {
+    background: white;
+    border-radius: 12px;
+    padding: 14px 22px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .stat { text-align: center; }
+  .stat-value {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--leo-blu);
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 11px;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+  }
+  .stat.correct .stat-value { color: var(--green); }
+  .stat.wrong .stat-value { color: var(--red); }
+
+  button.reset-btn, button.start-btn {
+    background: var(--leo-blu);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+  button.reset-btn:hover, button.start-btn:hover {
+    background: var(--leo-blu-dark);
+    transform: translateY(-1px);
+  }
+
+  /* ===== Drag and Drop ===== */
+  /* v2: bins on top, deck below for mobile-friendly UX */
+  .game-area {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .deck {
+    background: white;
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  .deck h3 {
+    margin: 0 0 12px;
+    color: var(--leo-blu-dark);
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .deck-counter {
+    color: var(--gray);
+    font-size: 12px;
+    margin-bottom: 12px;
+  }
+  .card-list {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 10px;
+    max-height: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 4px 4px 8px 4px;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+  }
+  .card {
+    min-width: 260px;
+    flex-shrink: 0;
+    scroll-snap-align: start;
+  }
+  .card {
+    background: white;
+    border: 2px solid var(--leo-blu-light);
+    border-radius: 8px;
+    padding: 12px 14px;
+    cursor: grab;
+    font-size: 13px;
+    user-select: none;
+    transition: all 0.2s;
+    line-height: 1.4;
+    position: relative;
+  }
+  .card:hover {
+    border-color: var(--leo-blu);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  }
+  .card:active { cursor: grabbing; }
+  .card.dragging { opacity: 0.4; }
+  .card .scope {
+    font-size: 10px;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+  .card.bo .scope { color: var(--leo-blu); }
+  .card.sd .scope { color: var(--orange); }
+  .card code {
+    background: #fce4ec;
+    color: #c2185b;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: Menlo, monospace;
+    font-size: 11px;
+  }
+  .card.correct {
+    border-color: var(--green);
+    background: var(--green-light);
+    animation: pop 0.4s;
+  }
+  .card.wrong {
+    border-color: var(--red);
+    background: var(--red-light);
+    animation: shake 0.4s;
+  }
+  @keyframes pop { 0% {transform: scale(1);} 50% {transform: scale(1.06);} 100% {transform: scale(1);} }
+  @keyframes shake { 0%, 100% {transform: translateX(0);} 25% {transform: translateX(-6px);} 75% {transform: translateX(6px);} }
+
+  .bins {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .bin {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    min-height: 140px;
+    border: 3px dashed transparent;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    display: flex;
+    flex-direction: column;
+  }
+  /* Empty bin placeholder text */
+  .bin .bin-items:empty::after {
+    content: "Drop cards here";
+    color: #bbb;
+    font-style: italic;
+    font-size: 12px;
+    text-align: center;
+    padding: 14px 0;
+    display: block;
+  }
+  .bin.over {
+    transform: scale(1.02);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+  }
+  .bin.add-only { border-color: var(--leo-blu); background: #e3f2fd; }
+  .bin.add-only.over { border-color: var(--leo-blu-dark); background: #bbdefb; }
+  .bin.can-change { border-color: var(--green); background: #f1f8e9; }
+  .bin.can-change.over { border-color: #2e7d32; background: #c8e6c9; }
+  .bin.cannot-change { border-color: var(--red); background: #ffebee; }
+  .bin.cannot-change.over { border-color: #c62828; background: #ffcdd2; }
+  .bin h2 {
+    margin: 0 0 6px;
+    font-size: 18px;
+  }
+  .bin .icon { font-size: 28px; }
+  .bin.add-only h2 { color: var(--leo-blu-dark); }
+  .bin.can-change h2 { color: #1b5e20; }
+  .bin.cannot-change h2 { color: #b71c1c; }
+  .bin .description {
+    font-size: 12px;
+    color: var(--gray);
+    margin-bottom: 10px;
+    line-height: 1.4;
+  }
+  .bin-items {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex-grow: 1;
+  }
+  .bin-item {
+    background: white;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 12px;
+    border-left: 3px solid var(--green);
+    line-height: 1.3;
+  }
+  .bin-item.wrong { border-left-color: var(--red); }
+  .bin-item .scope-tag {
+    font-size: 9px;
+    text-transform: uppercase;
+    color: var(--gray);
+    font-weight: 600;
+  }
+  .bin-item.bo .scope-tag { color: var(--leo-blu); }
+  .bin-item.sd .scope-tag { color: var(--orange); }
+  .bin-item code {
+    background: #fce4ec;
+    color: #c2185b;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-family: Menlo, monospace;
+    font-size: 10px;
+  }
+  .bin-item .hint {
+    color: var(--green);
+    font-size: 10px;
+    margin-top: 4px;
+    font-style: italic;
+  }
+  .bin-item.wrong .hint { color: var(--red); }
+
+  /* ===== Quiz mode ===== */
+  .quiz-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 14px;
+  }
+  .quiz-section { margin-bottom: 28px; }
+  .quiz-section h2 {
+    color: var(--leo-blu-dark);
+    font-size: 18px;
+    border-bottom: 2px solid var(--leo-blu);
+    padding-bottom: 6px;
+    margin-bottom: 14px;
+  }
+  .quiz-card {
+    background: white;
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 2px solid transparent;
+  }
+  .quiz-card:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,0.1); }
+  .quiz-card.revealed {
+    border-color: var(--leo-blu);
+  }
+  .quiz-card .property {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #333;
+  }
+  .quiz-card .property code {
+    background: #fce4ec;
+    color: #c2185b;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: Menlo, monospace;
+    font-size: 12px;
+  }
+  .quiz-card .answer {
+    background: var(--leo-blu-light);
+    color: var(--leo-blu-dark);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 12px;
+    margin-top: 8px;
+    display: none;
+  }
+  .quiz-card.revealed .answer { display: block; animation: fadeIn 0.3s; }
+  .quiz-card .answer .label {
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    margin-right: 6px;
+    color: white;
+  }
+  .answer.change-only .label { background: var(--green); }
+  .answer.change-remove .label { background: var(--orange); }
+  .answer.add-only .label { background: var(--leo-blu); }
+  .answer.locked .label { background: var(--red); }
+  .quiz-card .scope-badge {
+    display: inline-block;
+    font-size: 10px;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 3px;
+    margin-bottom: 8px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .scope-badge.bo { background: var(--leo-blu-light); color: var(--leo-blu-dark); }
+  .scope-badge.sd { background: var(--orange-light); color: #e65100; }
+
+  /* ===== Reference table ===== */
+  .legend {
+    background: white;
+    border-radius: 12px;
+    padding: 18px 22px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .legend h3 {
+    margin: 0 0 10px;
+    color: var(--leo-blu-dark);
+    font-size: 14px;
+    text-transform: uppercase;
+  }
+  .legend-items { display: flex; gap: 18px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+  .swatch {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    display: inline-block;
+  }
+  .swatch.add { background: var(--leo-blu); }
+  .swatch.change { background: var(--green); }
+  .swatch.cannot { background: var(--red); }
+
+  /* ===== Confetti ===== */
+  .confetti {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    pointer-events: none;
+    z-index: 9999;
+    animation: confetti-fall 2s linear forwards;
+  }
+  @keyframes confetti-fall {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* ===== Win modal ===== */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  .modal-overlay.show { display: flex; animation: fadeIn 0.3s; }
+  .modal {
+    background: white;
+    border-radius: 16px;
+    padding: 40px;
+    max-width: 480px;
+    text-align: center;
+    box-shadow: 0 10px 50px rgba(0,0,0,0.3);
+  }
+  .modal h2 { color: var(--leo-blu); font-size: 32px; margin: 0; }
+  .modal p { color: var(--gray); margin: 14px 0 22px; line-height: 1.5; }
+  .modal-stats {
+    background: var(--leo-blu-light);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 22px;
+  }
+
+  /* ===== Footer ===== */
+  footer {
+    text-align: center;
+    padding: 24px;
+    color: var(--leo-blu);
+    font-style: italic;
+    font-size: 14px;
+    margin-top: 24px;
+  }
+  footer .roar {
+    font-size: 22px;
+    margin-top: 4px;
+  }
+
+  /* ===== Selected card highlight (mobile tap-to-select) ===== */
+  .card.selected {
+    border-color: var(--orange);
+    background: var(--orange-light);
+    box-shadow: 0 4px 12px rgba(251, 140, 0, 0.4);
+    transform: scale(1.02);
+  }
+  .card .tap-hint {
+    display: none;
+    font-size: 10px;
+    color: var(--orange);
+    margin-top: 6px;
+    font-weight: 600;
+  }
+  .card.selected .tap-hint { display: block; }
+
+  /* Mobile hint banner */
+  .mobile-hint {
+    display: none;
+    background: #fff3e0;
+    border: 2px solid var(--orange);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    font-size: 13px;
+    color: #e65100;
+    text-align: center;
+  }
+  .mobile-hint strong { color: #bf360c; }
+
+  /* Make bins tappable when a card is selected */
+  .bin.tappable {
+    cursor: pointer;
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.01); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
+  }
+
+  /* ===== Responsive: tablet ===== */
+  @media (max-width: 1100px) {
+    main { padding: 18px; }
+  }
+
+  /* ===== Responsive: mobile ===== */
+  @media (max-width: 768px) {
+    body { font-size: 14px; }
+    header {
+      padding: 18px 16px 14px;
+    }
+    h1 {
+      font-size: 20px;
+      gap: 8px;
+    }
+    h1 .emoji { font-size: 24px; }
+    header .subtitle { font-size: 12px; }
+    .tab-row {
+      gap: 4px;
+      margin-top: 14px;
+      overflow-x: auto;
+      flex-wrap: nowrap;
+      -webkit-overflow-scrolling: touch;
+    }
+    .tab {
+      padding: 8px 14px;
+      font-size: 12px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    main { padding: 12px; }
+    .stats {
+      padding: 10px 12px;
+      gap: 8px;
+    }
+    .stat-value { font-size: 20px; }
+    .stat-label { font-size: 9px; }
+    button.reset-btn { padding: 8px 14px; font-size: 12px; }
+
+    /* Show mobile hint */
+    .mobile-hint { display: block; }
+
+    /* Game area already stacks via v2 layout — adjust spacing */
+    .game-area {
+      gap: 12px;
+    }
+    /* Mobile: deck sticks to bottom of viewport like a card hand */
+    .deck {
+      padding: 10px 12px;
+      position: sticky;
+      bottom: 0;
+      z-index: 50;
+      border-top: 3px solid var(--leo-blu-light);
+      box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
+      margin-bottom: 0;
+    }
+    .deck h3 { font-size: 12px; }
+    /* Add some bottom padding to body so sticky deck doesn't cover content */
+    main { padding-bottom: 30px; }
+    .card-list {
+      gap: 8px;
+    }
+    .card {
+      padding: 10px 12px;
+      font-size: 12px;
+      cursor: pointer; /* tap-friendly */
+      min-width: 220px;
+    }
+    .card .scope { font-size: 9px; }
+    .card code { font-size: 10px; }
+
+    /* Bins stack vertically and become tappable */
+    .bins {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    .bin {
+      min-height: auto;
+      padding: 12px;
+    }
+    .bin h2 { font-size: 15px; }
+    .bin .icon { font-size: 22px; }
+    .bin .description { font-size: 11px; }
+    .bin-item { padding: 6px 8px; font-size: 11px; }
+    .bin-item .scope-tag { font-size: 8px; }
+    .bin-item .hint { font-size: 9px; }
+
+    /* Legend tighter on mobile */
+    .legend { padding: 12px 14px; }
+    .legend h3 { font-size: 12px; }
+    .legend-items { gap: 10px; }
+    .legend-item { font-size: 11px; }
+
+    /* Quiz grid: single column on phones */
+    .quiz-grid { grid-template-columns: 1fr; gap: 10px; }
+    .quiz-card { padding: 12px; }
+    .quiz-card .property { font-size: 13px; }
+    .quiz-section h2 { font-size: 16px; }
+
+    /* Modal tighter on mobile */
+    .modal {
+      padding: 24px 18px;
+      margin: 16px;
+      max-width: 100%;
+    }
+    .modal h2 { font-size: 24px; }
+    .modal p { font-size: 13px; }
+  }
+
+  /* ===== Very small phones ===== */
+  @media (max-width: 400px) {
+    header { padding: 14px 12px 12px; }
+    h1 { font-size: 18px; }
+    .stats { flex-direction: row; }
+    .stat-value { font-size: 18px; }
+    main { padding: 10px; }
+    .card { min-width: 200px; }
+  }
+
+  /* ===== v1 link banner ===== */
+  .v1-link-banner {
+    background: #f5f5f5;
+    border-radius: 8px;
+    padding: 8px 14px;
+    text-align: center;
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 14px;
+  }
+  .v1-link-banner a {
+    color: var(--leo-blu);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .v1-link-banner a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="emoji">🔒</span> Locked or Loose? <span class="emoji">🦁💙</span></h1>
+  <div class="subtitle">The Workday Extend Model First Game — After Promotion, what survives?</div>
+  <div class="tab-row">
+    <button class="tab active" data-panel="game">🎮 Drag &amp; Drop Game</button>
+    <button class="tab" data-panel="quiz">🃏 Quiz Mode</button>
+    <button class="tab" data-panel="rules">📖 Rules &amp; Reference</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- ===================== GAME PANEL ===================== -->
+  <div class="panel active" id="game-panel">
+    <div class="stats">
+      <div class="stat correct">
+        <div class="stat-value" id="score-correct">0</div>
+        <div class="stat-label">Correct</div>
+      </div>
+      <div class="stat wrong">
+        <div class="stat-value" id="score-wrong">0</div>
+        <div class="stat-label">Wrong</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="score-remaining">0</div>
+        <div class="stat-label">Remaining</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="score-streak">0</div>
+        <div class="stat-label">🔥 Streak</div>
+      </div>
+      <button class="reset-btn" onclick="resetGame()">🔄 Reset</button>
+    </div>
+
+    <div class="legend">
+      <h3>Sort each card into the right bin</h3>
+      <div class="legend-items">
+        <div class="legend-item"><span class="swatch add"></span><strong>Add New Only:</strong> can add post-promotion, but cannot remove the originals</div>
+        <div class="legend-item"><span class="swatch change"></span><strong>Can Change / Remove:</strong> flexible after promotion</div>
+        <div class="legend-item"><span class="swatch cannot"></span><strong>Locked:</strong> in stone — model right the first time</div>
+      </div>
+    </div>
+
+    <div class="v1-link-banner">
+      📱 You're on the <strong>mobile</strong> version (bins on top, sticky deck at bottom).
+      On a bigger screen? <a href="desktop.html">Switch to desktop →</a>
+    </div>
+
+    <div class="mobile-hint">
+      📱 <strong>On mobile?</strong> Tap a card from the deck below, then tap a bin above to drop it there. (On desktop: drag &amp; drop works too!)
+    </div>
+
+    <div class="game-area">
+      <!-- BINS ON TOP -->
+      <div class="bins">
+        <div class="bin add-only" data-bin="add">
+          <h2><span class="icon">➕</span> Add New Only</h2>
+          <div class="description">You can add NEW ones after promotion, but originals are locked</div>
+          <div class="bin-items" id="bin-add"></div>
+        </div>
+        <div class="bin can-change" data-bin="change">
+          <h2><span class="icon">✏️</span> Can Change / Remove</h2>
+          <div class="description">Flexible after promotion — labels, descriptions, attributes</div>
+          <div class="bin-items" id="bin-change"></div>
+        </div>
+        <div class="bin cannot-change" data-bin="locked">
+          <h2><span class="icon">🔒</span> Locked Forever</h2>
+          <div class="description">Cannot change, cannot remove — model carefully!</div>
+          <div class="bin-items" id="bin-locked"></div>
+        </div>
+      </div>
+
+      <!-- DECK BELOW (sticky on mobile, horizontal scroll) -->
+      <div class="deck">
+        <h3>🎴 Card Deck — swipe to browse, tap a card to select</h3>
+        <div class="deck-counter" id="deck-counter">Cards remaining: 0</div>
+        <div class="card-list" id="card-deck"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== QUIZ PANEL ===================== -->
+  <div class="panel" id="quiz-panel">
+    <div class="legend">
+      <h3>Click any card to reveal what you can do with it after promotion</h3>
+      <div class="legend-items">
+        <div class="legend-item"><span class="swatch add"></span>Add new only</div>
+        <div class="legend-item"><span class="swatch change"></span>Can change / remove</div>
+        <div class="legend-item"><span class="swatch cannot"></span>Locked</div>
+      </div>
+    </div>
+
+    <div class="quiz-section">
+      <h2>🧱 Business Objects (BO)</h2>
+      <div class="quiz-grid" id="quiz-bo"></div>
+    </div>
+
+    <div class="quiz-section">
+      <h2>🔐 Security Domains</h2>
+      <div class="quiz-grid" id="quiz-sd"></div>
+    </div>
+  </div>
+
+  <!-- ===================== RULES PANEL ===================== -->
+  <div class="panel" id="rules-panel">
+    <div class="legend">
+      <h3>🦁 Model First — The Core Rules</h3>
+      <p style="font-size: 14px; line-height: 1.6; color: #444;">
+        In Workday Extend, your <strong>Dev tenant</strong> is the playground — build, break, rebuild.
+        But once you promote to <strong>Implementation, Sandbox, or Production</strong>, parts of your model become permanent.
+        This game teaches you which parts survive, which can flex, and which are carved in stone.
+      </p>
+      <h3 style="margin-top: 20px;">🛠️ The Three Buckets</h3>
+      <ul style="line-height: 1.7; font-size: 13px;">
+        <li><strong style="color: var(--leo-blu);">Add New Only</strong> — You can add brand-new BOs, fields, security domains post-promotion. But you cannot REMOVE the existing ones — they're locked.</li>
+        <li><strong style="color: var(--green);">Can Change / Remove</strong> — Labels, descriptions, and most attributes can flex. These are truly flexible — you can toggle them either direction freely.</li>
+        <li><strong style="color: var(--red);">Locked Forever</strong> — Field types, removed BOs/fields, and <strong>one-way switches</strong> like <code>enableReportingFromTarget</code>, <code>enabledForPageSecurity</code>, <code>enabledForOrchestrationSecurity</code> — once enabled, cannot disable.</li>
+      </ul>
+      <h3 style="margin-top: 20px;">⚠️ The One-Way Trap (most dangerous!)</h3>
+      <p style="font-size: 14px; line-height: 1.6; background: #fff3e0; padding: 12px; border-left: 4px solid var(--orange); border-radius: 6px;">
+        Some attributes look like they "can change" — but only in <strong>one direction</strong>:
+        <br><br>
+        <code>false → true</code> ✅ allowed (once)<br>
+        <code>true → false</code> ❌ never allowed
+        <br><br>
+        These behave like locked attributes the moment you flip them. The Workday docs technically say "Allowed Update" — but that's misleading. <strong>Treat these as Locked.</strong> Examples: <code>enableReportingFromTarget</code>, <code>enabledForPageSecurity</code>, <code>enabledForOrchestrationSecurity</code>.
+      </p>
+      <h3 style="margin-top: 20px;">🎯 The Take-Home</h3>
+      <p style="font-size: 14px; line-height: 1.6;">
+        <em>Build with the promotion in mind from day one. Cap your BOs at ~45 fields (not 50) for runway.
+        Be EXTREMELY stingy with index and reporting flags. Your future self will thank you.</em>
+      </p>
+      <p style="text-align: center; color: var(--leo-blu); font-style: italic; margin-top: 20px;">
+        "50 is the limit. 47 is the best practice. 45 is the instinct." 🦁💙
+      </p>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  Powered With Roar
+  <div class="roar">🦁💙</div>
+</footer>
+
+<!-- ===================== WIN MODAL ===================== -->
+<div class="modal-overlay" id="win-modal">
+  <div class="modal">
+    <h2>🎉 Roar!</h2>
+    <p id="win-message">You sorted them all — Model First champion!</p>
+    <div class="modal-stats" id="win-stats"></div>
+    <button class="start-btn" onclick="closeModal()">Play Again 🔄</button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   THE DATA — Workday Extend Model Components After Promotion
+   Each item: scope, property, bin (correct answer), explanation
+   ============================================================ */
+const ITEMS = [
+  // ===== Business Objects =====
+  { scope: 'BO', prop: 'A new Business Object',                          bin: 'add',    explain: 'Can add new BOs post-promotion — but you cannot remove the existing ones' },
+  { scope: 'BO', prop: 'Removing an existing Business Object',           bin: 'locked', explain: 'Once promoted, BOs cannot be removed. The BO exists forever in your app — choose names wisely.' },
+  { scope: 'BO', prop: 'BO <code>label</code>',                          bin: 'change', explain: 'Label changes anytime — fully flexible' },
+  { scope: 'BO', prop: 'BO <code>name</code> (the JSON id)',             bin: 'change', explain: 'Can rename — but you must update all PMD endpoints, AMD references, and orchestrations that use it' },
+  { scope: 'BO', prop: 'Security domain assigned to a BO',               bin: 'change', explain: 'Can change or remove the security domain on a BO' },
+  { scope: 'BO', prop: '<code>defaultCollection</code> name & label',    bin: 'change', explain: 'Both name and label can be changed' },
+
+  // ===== BO Fields =====
+  { scope: 'BO', prop: 'Adding a new field to an existing BO',           bin: 'add',    explain: 'You can add new fields anytime — but only within the 50-field cap (Leo\'s rule: stop at 45!)' },
+  { scope: 'BO', prop: 'Removing a field',                               bin: 'locked', explain: 'Fields cannot be removed once promoted. Every field is a forever commitment.' },
+  { scope: 'BO', prop: 'Changing a field <code>type</code>',             bin: 'locked', explain: 'Field type is permanent — TEXT stays TEXT, NUMBER stays NUMBER, forever' },
+  { scope: 'BO', prop: 'Field <code>label</code>',                       bin: 'change', explain: 'Labels are soft — change freely' },
+  { scope: 'BO', prop: 'Field <code>name</code>',                        bin: 'change', explain: 'Can rename — but must update all PMD/orchestration references that point to it' },
+  { scope: 'BO', prop: 'Field <code>description</code>',                 bin: 'change', explain: 'Description is always editable' },
+  { scope: 'BO', prop: 'Field security domain',                          bin: 'change', explain: 'Can change or remove the security domain on a field' },
+  { scope: 'BO', prop: '<code>secureByTarget</code> on SI field',        bin: 'change', explain: 'Can change the value freely after promotion' },
+  { scope: 'BO', prop: '<code>enableReportingFromTarget</code> on SI',   bin: 'locked', explain: '⚠️ ONE-WAY TRAP: false → true ONLY. Once enabled, cannot turn off. Treat as locked — and you only get 5 across your ENTIRE app!' },
+  { scope: 'BO', prop: '<code>useForDisplay</code> on TEXT field',       bin: 'change', explain: 'Can flip — sets which field shows as the display name (max 1 per BO)' },
+  { scope: 'BO', prop: '<code>enableIndex</code> attribute',             bin: 'change', explain: 'Can change or remove — but only 5 indexed fields per BO. Be EXTREMELY stingy.' },
+  { scope: 'BO', prop: '<code>enableSearch</code> attribute',            bin: 'change', explain: 'Can change or remove freely' },
+  { scope: 'BO', prop: '<code>isPurgeable</code> attribute',             bin: 'change', explain: 'Can change after promotion — used for GDPR compliance' },
+  { scope: 'BO', prop: '<code>decimals</code> on DECIMAL field',         bin: 'change', explain: 'Decimal precision is flexible' },
+  { scope: 'BO', prop: '<code>precision</code> on DATE field',           bin: 'change', explain: 'Date precision can be changed' },
+  { scope: 'BO', prop: 'Removing a derived field',                       bin: 'change', explain: 'Derived fields CAN be removed (unlike regular fields) — they are computed, not stored' },
+  { scope: 'BO', prop: 'Derived field <code>label</code>, <code>type</code>, <code>expression</code>', bin: 'change', explain: 'All derived field properties are flexible — including the type and expression' },
+  { scope: 'BO', prop: '<code>isReferenceId</code> on a TEXT field',     bin: 'locked', explain: '🔒 Once data is written to a field with isReferenceId=true, this CANNOT be changed. Only 1 reference ID per BO — pick carefully.' },
+
+  // ===== Security Domains =====
+  { scope: 'SD', prop: 'A new Security Domain',                          bin: 'add',    explain: 'Can add new security domains post-promotion. App limit: 10 total.' },
+  { scope: 'SD', prop: 'Removing a Security Domain',                     bin: 'locked', explain: 'Once promoted, security domains cannot be removed. They exist forever in your app.' },
+  { scope: 'SD', prop: 'Security Domain <code>label</code>',             bin: 'change', explain: 'Label changes anytime' },
+  { scope: 'SD', prop: 'Security Domain <code>name</code>',              bin: 'change', explain: 'Can rename — but you MUST update the name everywhere it is used in your app (BOs, pages, orchestrations)' },
+  { scope: 'SD', prop: '<code>enabledForPageSecurity</code>',            bin: 'locked', explain: '⚠️ ONE-WAY TRAP: false → true ONLY. Once enabled, cannot disable. Set carefully at design time.' },
+  { scope: 'SD', prop: '<code>enabledForOrchestrationSecurity</code>',   bin: 'locked', explain: '⚠️ ONE-WAY TRAP: false → true ONLY. Once enabled, cannot disable. Set carefully at design time.' }
+];
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let state = {
+  deck: [],
+  placed: { add: [], change: [], locked: [] },
+  correct: 0,
+  wrong: 0,
+  streak: 0,
+  bestStreak: 0,
+  selectedIdx: null  // for tap-to-select on mobile
+};
+
+/* ============================================================
+   INITIALIZATION
+   ============================================================ */
+function init() {
+  setupTabs();
+  resetGame();
+  buildQuiz();
+}
+
+function setupTabs() {
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById(tab.dataset.panel + '-panel').classList.add('active');
+    });
+  });
+}
+
+/* ============================================================
+   DRAG-AND-DROP GAME
+   ============================================================ */
+function resetGame() {
+  state.deck = shuffle([...ITEMS]);
+  state.placed = { add: [], change: [], locked: [] };
+  state.correct = 0;
+  state.wrong = 0;
+  state.streak = 0;
+  state.selectedIdx = null;
+  renderDeck();
+  renderBins();
+  updateStats();
+  updateBinTappableState();
+  closeModal();
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function renderDeck() {
+  const deck = document.getElementById('card-deck');
+  deck.innerHTML = '';
+  state.deck.forEach((item, idx) => {
+    const card = document.createElement('div');
+    card.className = 'card ' + item.scope.toLowerCase();
+    if (state.selectedIdx === idx) card.classList.add('selected');
+    card.draggable = true;
+    card.dataset.idx = idx;
+    card.innerHTML = `
+      <div class="scope">${item.scope === 'BO' ? '🧱 Business Object' : '🔐 Security Domain'}</div>
+      <div>${item.prop}</div>
+      <div class="tap-hint">👉 Now tap a bin to drop here</div>
+    `;
+    // Drag-and-drop (desktop)
+    card.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/plain', idx);
+      card.classList.add('dragging');
+    });
+    card.addEventListener('dragend', () => card.classList.remove('dragging'));
+    // Tap-to-select (mobile)
+    card.addEventListener('click', () => {
+      if (state.selectedIdx === idx) {
+        state.selectedIdx = null;
+      } else {
+        state.selectedIdx = idx;
+        // On mobile, smoothly scroll to bins so user sees them
+        if (window.innerWidth <= 768) {
+          const binsEl = document.querySelector('.bins');
+          if (binsEl) {
+            setTimeout(() => binsEl.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+          }
+        }
+      }
+      renderDeck();
+      updateBinTappableState();
+    });
+    deck.appendChild(card);
+  });
+  document.getElementById('deck-counter').textContent = 'Cards remaining: ' + state.deck.length;
+}
+
+// Highlight bins as tappable when a card is selected (mobile)
+function updateBinTappableState() {
+  document.querySelectorAll('.bin').forEach(bin => {
+    if (state.selectedIdx !== null) {
+      bin.classList.add('tappable');
+    } else {
+      bin.classList.remove('tappable');
+    }
+  });
+}
+
+function renderBins() {
+  ['add', 'change', 'locked'].forEach(binKey => {
+    const bin = document.getElementById('bin-' + binKey);
+    bin.innerHTML = '';
+    state.placed[binKey].forEach(p => {
+      const item = document.createElement('div');
+      item.className = 'bin-item ' + p.item.scope.toLowerCase() + (p.correct ? '' : ' wrong');
+      item.innerHTML = `
+        <div class="scope-tag">${p.item.scope === 'BO' ? 'BO' : 'Security Domain'}</div>
+        <div>${p.item.prop}</div>
+        <div class="hint">${p.correct ? '✅ ' : '❌ Correct bin: ' + binLabel(p.item.bin) + ' — '}${p.item.explain}</div>
+      `;
+      bin.appendChild(item);
+    });
+  });
+}
+
+function binLabel(bin) {
+  return { add: 'Add New Only', change: 'Can Change / Remove', locked: 'Locked' }[bin];
+}
+
+// Shared function: place a card into a bin (used by both drag-drop and tap-to-drop)
+function placeCard(idx, binKey) {
+  const item = state.deck[idx];
+  if (!item) return;
+  const correct = item.bin === binKey;
+  state.placed[binKey].push({ item, correct });
+  state.deck.splice(idx, 1);
+  if (correct) {
+    state.correct++;
+    state.streak++;
+    if (state.streak > state.bestStreak) state.bestStreak = state.streak;
+    fireConfetti();
+  } else {
+    state.wrong++;
+    state.streak = 0;
+  }
+  state.selectedIdx = null;  // clear selection after placement
+  renderDeck();
+  renderBins();
+  updateStats();
+  updateBinTappableState();
+  if (state.deck.length === 0) {
+    setTimeout(showWinModal, 600);
+  }
+}
+
+['add', 'change', 'locked'].forEach(binKey => {
+  const binEl = document.querySelector('[data-bin="' + binKey + '"]');
+  // Drag-and-drop (desktop)
+  binEl.addEventListener('dragover', e => {
+    e.preventDefault();
+    e.currentTarget.classList.add('over');
+  });
+  binEl.addEventListener('dragleave', e => {
+    e.currentTarget.classList.remove('over');
+  });
+  binEl.addEventListener('drop', e => {
+    e.preventDefault();
+    e.currentTarget.classList.remove('over');
+    const idx = parseInt(e.dataTransfer.getData('text/plain'));
+    placeCard(idx, binKey);
+  });
+  // Tap-to-drop (mobile/touch)
+  binEl.addEventListener('click', e => {
+    if (state.selectedIdx !== null) {
+      placeCard(state.selectedIdx, binKey);
+    }
+  });
+});
+
+function updateStats() {
+  document.getElementById('score-correct').textContent = state.correct;
+  document.getElementById('score-wrong').textContent = state.wrong;
+  document.getElementById('score-remaining').textContent = state.deck.length;
+  document.getElementById('score-streak').textContent = state.streak;
+}
+
+/* ============================================================
+   CONFETTI
+   ============================================================ */
+function fireConfetti() {
+  const colors = ['#1e88e5', '#0d47a1', '#fb8c00', '#43a047', '#e91e63', '#9c27b0'];
+  for (let i = 0; i < 30; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.background = colors[Math.floor(Math.random() * colors.length)];
+    c.style.left = (Math.random() * 100) + 'vw';
+    c.style.top = '-10px';
+    c.style.animationDuration = (1.5 + Math.random() * 1.5) + 's';
+    c.style.transform = 'rotate(' + (Math.random() * 360) + 'deg)';
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 3000);
+  }
+}
+
+/* ============================================================
+   WIN MODAL
+   ============================================================ */
+function showWinModal() {
+  const total = state.correct + state.wrong;
+  const pct = Math.round((state.correct / total) * 100);
+  let msg = '';
+  if (pct === 100) msg = '🦁 PERFECT SCORE! You are a true Model First Master!';
+  else if (pct >= 80) msg = '🎉 Excellent! You really know your Extend model rules.';
+  else if (pct >= 60) msg = '💪 Solid effort! Review the rules and try again.';
+  else msg = '📚 Time to brush up on Model First — try the Rules tab!';
+
+  document.getElementById('win-message').textContent = msg;
+  document.getElementById('win-stats').innerHTML = `
+    <div style="display: flex; justify-content: space-around; align-items: center;">
+      <div><div style="font-size: 28px; font-weight: 700; color: var(--green);">${state.correct}</div><div style="font-size: 11px; color: var(--gray);">CORRECT</div></div>
+      <div><div style="font-size: 28px; font-weight: 700; color: var(--red);">${state.wrong}</div><div style="font-size: 11px; color: var(--gray);">WRONG</div></div>
+      <div><div style="font-size: 28px; font-weight: 700; color: var(--orange);">${pct}%</div><div style="font-size: 11px; color: var(--gray);">SCORE</div></div>
+      <div><div style="font-size: 28px; font-weight: 700; color: var(--leo-blu);">🔥${state.bestStreak}</div><div style="font-size: 11px; color: var(--gray);">BEST STREAK</div></div>
+    </div>
+  `;
+  document.getElementById('win-modal').classList.add('show');
+  fireConfetti();
+  setTimeout(fireConfetti, 400);
+  setTimeout(fireConfetti, 800);
+}
+
+function closeModal() {
+  document.getElementById('win-modal').classList.remove('show');
+}
+
+/* ============================================================
+   QUIZ MODE
+   ============================================================ */
+function buildQuiz() {
+  const boGrid = document.getElementById('quiz-bo');
+  const sdGrid = document.getElementById('quiz-sd');
+  boGrid.innerHTML = '';
+  sdGrid.innerHTML = '';
+
+  ITEMS.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'quiz-card';
+    const labelText = { add: 'Add New Only', change: 'Can Change/Remove', locked: 'Locked' }[item.bin];
+    const labelClass = { add: 'add-only', change: 'change-only', locked: 'locked' }[item.bin];
+    card.innerHTML = `
+      <span class="scope-badge ${item.scope.toLowerCase()}">${item.scope === 'BO' ? '🧱 BO' : '🔐 Security Domain'}</span>
+      <div class="property">${item.prop}</div>
+      <div class="answer ${labelClass}"><span class="label">${labelText}</span>${item.explain}</div>
+    `;
+    card.addEventListener('click', () => card.classList.toggle('revealed'));
+    if (item.scope === 'BO') boGrid.appendChild(card);
+    else sdGrid.appendChild(card);
+  });
+}
+
+/* ============================================================
+   GO
+   ============================================================ */
+init();
+</script>
+</body>
+</html>
