@@ -543,23 +543,74 @@
     /* Show mobile hint */
     .mobile-hint { display: block; }
 
-    /* Game area already stacks via v2 layout — adjust spacing */
-    .game-area {
-      gap: 12px;
+    /* ===== Mobile: locked layout — header, stats, deck stay fixed; only bins scroll ===== */
+    body {
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
-    /* Mobile: deck sticks to bottom of viewport like a card hand */
+    header {
+      flex-shrink: 0;
+    }
+    main {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      padding: 10px 12px 0 12px;
+    }
+    /* Only the active panel becomes flex container */
+    .panel.active {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+      overflow: hidden;
+    }
+    .stats {
+      flex-shrink: 0;
+      margin-bottom: 8px;
+    }
+    .legend {
+      flex-shrink: 0;
+      margin-bottom: 8px;
+    }
+    .mobile-hint {
+      flex-shrink: 0;
+    }
+    .game-area {
+      gap: 8px;
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-height: 0;
+    }
+    /* Bins scroll inside their own container */
+    .bins {
+      flex: 1 1 auto;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 4px 2px;
+    }
+    /* Deck stays fixed at bottom of game-area */
     .deck {
+      flex-shrink: 0;
       padding: 10px 12px;
-      position: sticky;
-      bottom: 0;
-      z-index: 50;
       border-top: 3px solid var(--leo-blu-light);
       box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
-      margin-bottom: 0;
+      margin: 0;
     }
     .deck h3 { font-size: 12px; }
-    /* Add some bottom padding to body so sticky deck doesn't cover content */
-    main { padding-bottom: 30px; }
+    /* Quiz and rules panels can scroll normally */
+    #quiz-panel.active, #rules-panel.active {
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    footer {
+      display: none; /* hide footer on mobile to save vertical space */
+    }
     .card-list {
       gap: 8px;
     }
@@ -683,13 +734,9 @@
       </div>
     </div>
 
-    <div class="v1-link-banner">
-      📱 You're on the <strong>mobile</strong> version (bins on top, sticky deck at bottom).
-      On a bigger screen? <a href="desktop.html">Switch to desktop →</a>
-    </div>
-
     <div class="mobile-hint">
-      📱 <strong>On mobile?</strong> Tap a card from the deck below, then tap a bin above to drop it there. (On desktop: drag &amp; drop works too!)
+      📱 <strong>You're on mobile.</strong> Tap a card from the deck below, then tap a bin above to drop it there.
+      <a href="desktop.html" style="color: #1e88e5; font-weight: 600; text-decoration: none; white-space: nowrap;">Switch to desktop →</a>
     </div>
 
     <div class="game-area">
