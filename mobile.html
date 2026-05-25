@@ -509,65 +509,94 @@
   /* ===== Responsive: mobile ===== */
   @media (max-width: 768px) {
     body { font-size: 14px; }
+    /* Tighter header */
     header {
-      padding: 18px 16px 14px;
+      padding: 12px 14px 10px;
     }
     h1 {
-      font-size: 20px;
-      gap: 8px;
+      font-size: 17px;
+      gap: 6px;
+      margin: 0;
     }
-    h1 .emoji { font-size: 24px; }
-    header .subtitle { font-size: 12px; }
+    h1 .emoji { font-size: 20px; }
+    header .subtitle {
+      font-size: 11px;
+      margin-top: 2px;
+    }
     .tab-row {
       gap: 4px;
-      margin-top: 14px;
+      margin-top: 10px;
       overflow-x: auto;
       flex-wrap: nowrap;
       -webkit-overflow-scrolling: touch;
     }
     .tab {
-      padding: 8px 14px;
-      font-size: 12px;
+      padding: 6px 12px;
+      font-size: 11px;
       white-space: nowrap;
       flex-shrink: 0;
+      border-radius: 6px 6px 0 0;
     }
-    main { padding: 12px; }
-    .stats {
-      padding: 10px 12px;
-      gap: 8px;
-    }
-    .stat-value { font-size: 20px; }
-    .stat-label { font-size: 9px; }
-    button.reset-btn { padding: 8px 14px; font-size: 12px; }
+    main { padding: 10px; }
 
-    /* Show mobile hint */
-    .mobile-hint { display: block; }
+    /* Compact stats — one row, smaller */
+    .stats {
+      padding: 8px 10px;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .stat-value { font-size: 17px; }
+    .stat-label { font-size: 8px; }
+    button.reset-btn { padding: 6px 10px; font-size: 11px; }
+
+    /* Compact legend — tighter */
+    .legend {
+      padding: 8px 12px;
+      margin-bottom: 8px;
+    }
+    .legend h3 { font-size: 11px; margin-bottom: 6px; }
+    .legend-items { gap: 8px; }
+    .legend-item { font-size: 10px; }
+    .swatch { width: 14px; height: 14px; }
+
+    /* Compact mobile-hint */
+    .mobile-hint {
+      display: block;
+      padding: 8px 12px;
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
 
     /* Game area already stacks via v2 layout — adjust spacing */
     .game-area {
-      gap: 12px;
+      gap: 10px;
     }
-    /* Mobile: deck sticks to bottom of viewport like a card hand */
+
+    /* DECK: vertical scrolling card list with its own scroll container */
     .deck {
       padding: 10px 12px;
-      position: sticky;
-      bottom: 0;
-      z-index: 50;
-      border-top: 3px solid var(--leo-blu-light);
-      box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
-      margin-bottom: 0;
+      margin-bottom: 10px;
     }
-    .deck h3 { font-size: 12px; }
-    /* Add some bottom padding to body so sticky deck doesn't cover content */
-    main { padding-bottom: 30px; }
+    .deck h3 { font-size: 11px; margin-bottom: 4px; }
+    .deck-counter { font-size: 10px; margin-bottom: 8px; }
+    /* Override the horizontal scroll with vertical scrolling */
     .card-list {
-      gap: 8px;
+      flex-direction: column !important;
+      flex-wrap: nowrap !important;
+      overflow-x: hidden !important;
+      overflow-y: auto !important;
+      max-height: 280px;
+      gap: 6px;
+      padding: 2px;
+      scroll-snap-type: none;
     }
     .card {
+      min-width: 0 !important;
+      width: 100%;
       padding: 10px 12px;
       font-size: 12px;
-      cursor: pointer; /* tap-friendly */
-      min-width: 220px;
+      cursor: pointer;
+      scroll-snap-align: none;
     }
     .card .scope { font-size: 9px; }
     .card code { font-size: 10px; }
